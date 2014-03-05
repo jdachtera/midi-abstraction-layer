@@ -1,0 +1,20 @@
+{
+  "name": "midi-abstraction-layer",
+  "version": "0.0.1",
+  "description": "An Abstraction Layer for generating and parsing midi buffers.",
+  "main": "src/index.js",
+  "dependencies": {
+    "midi-common": "*"
+  },
+  "devDependencies": {
+    "test": ">=0.0.5"
+  },
+  "scripts": {
+    "test": "mocha"
+  },
+  "keywords": [
+    "midi"
+  ],
+  "author": "Jascha Dachtera",
+  "license": "MIT"
+}
