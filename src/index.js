@@ -18,17 +18,17 @@ var MidiMessage                 = require('./Message/MidiMessage'),
 
 
 var defaultParsers = {
-  0x80: NoteOffMessage.parseBuffer,
-  0x90: NoteOnMessage.parseBuffer,
-  0xa0: PolyphonicAftertouchMessage.parseBuffer,
-  0xb0: ControlChangeMessage.parseBuffer,
-  0xc0: ProgramChangeMessage.parseBuffer,
-  0xd0: ChannelAftertouchMessage.parseBuffer,
-  0xe0: PitchBendMessage.parseBuffer,
-  0xf0: SystemExclusiveMessage.parseBuffer,
-  0xf1: QuarterFrameMessage.parseBuffer,
-  0xf2: SongPositionMessage.parseBuffer,
-  0xf3: SongSelectMessage.parseBuffer
+  0x80: NoteOffMessage,
+  0x90: NoteOnMessage,
+  0xa0: PolyphonicAftertouchMessage,
+  0xb0: ControlChangeMessage,
+  0xc0: ProgramChangeMessage,
+  0xd0: ChannelAftertouchMessage,
+  0xe0: PitchBendMessage,
+  0xf0: SystemExclusiveMessage,
+  0xf1: QuarterFrameMessage,
+  0xf2: SongPositionMessage,
+  0xf3: SongSelectMessage
 };
 
 var defaultSysExParsers = {
@@ -38,10 +38,11 @@ var defaultSysExParsers = {
 var Dissector = exports.Dissector = function Dissector(filter) {
   Writable.apply(this);
   this.parsers = Object.create(defaultParsers);
+  this.sysExParsers = Object.create(defaultSysExParsers);
   this.filter = {};
   if (filter) {
     filter.forEach(function(command) {
-      if (util.isString(command)) {
+      if (typeof(command) === 'string') {
         var value = null;
         for (var key in midiCommon.commands) {
           if ( midiCommon.commands.hasOwnProperty(key) && midiCommon.commands[key] &&  midiCommon.commands[key].name === command) {
@@ -57,8 +58,6 @@ var Dissector = exports.Dissector = function Dissector(filter) {
       }
     }
   }
-
-  this.on('systemExclusive', this.handleSystemExclusiveMessage.bind(this));
 };
 
 util.inherits(Dissector, Writable);
@@ -72,37 +71,44 @@ Dissector.prototype.addParser = function(command, parseFunc) {
 };
 
 Dissector.prototype.parse = function(buffer) {
+  var command,
+      type,
+      Parser,
+      message;
+
   if (!Buffer.isBuffer(buffer)) {
     buffer = new Buffer(buffer);
   }
-  var command = buffer[0];
+  command = buffer[0];
   if (command & 0x80) {
     if (command < 0xf0) {
-      command = 0xF0 & command;
+      command = 0xf0 & command;
     }
 
     if (!this.filter[command]) {
       return;
     }
-    var type = midiCommon.commands[command],
-        parseFunc = this.parsers[command];
+    type = midiCommon.commands[command];
+    Parser = this.parsers[command];
 
     if (type) {
-
-      if (parseFunc) {
-        var message = parseFunc(buffer);
+      if (Parser) {
+        message = Parser.parseBuffer(buffer, this);
         if (message) {
-          this.emit(type.name, message);
+          this.emit(message.eventName || type.name, message);
+          this.emit('message', message.eventName || type.name, message);
         }
       } else {
-        this.emit(type.name, buffer)
+        this.emit(type.name, buffer);
+        this.emit('message', type.name, buffer);
       }
     }
+
   }
 };
 
-Dissector.prototype.handleSystemExclusiveMessage = function(message) {
-
+Dissector.prototype.getSystemExlusiveParser = function(manufacturerId) {
+  return this.sysExParsers[manufacturerId];
 };
 
 Dissector.prototype._write = function(chunk, encoding, callback) {

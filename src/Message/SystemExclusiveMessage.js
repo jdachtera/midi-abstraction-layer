@@ -1,5 +1,5 @@
 var MidiMessage = require('./MidiMessage'),
-    util = require('util');
+    midiCommon = require('midi-common');
 
 function SystemExclusiveMessage(manufacturerId, deviceId, data) {
   if (typeof(manufacturerId) === 'string') {
@@ -15,7 +15,7 @@ function SystemExclusiveMessage(manufacturerId, deviceId, data) {
   this.data = data;
 }
 
-SystemExclusiveMessage.parseBuffer = function(buffer) {
+SystemExclusiveMessage.parseBuffer = function(buffer, dissector) {
   if (MidiMessage.validateBuffer(0xf0, buffer)) {
     var isExtended,
         manufacturerId,
@@ -25,7 +25,10 @@ SystemExclusiveMessage.parseBuffer = function(buffer) {
 
     if (buffer[1] === 0) {
       isExtended = true;
-      manufacturerId = '00' + buffer.readUInt16BE(2).toString(16);
+      manufacturerId = buffer.readUInt16BE(2).toString(16);
+      while (manufacturerId.length < 6) {
+        manufacturerId = '0' + manufacturerId;
+      }
     } else {
       manufacturerId = buffer[1];
     }
@@ -35,9 +38,24 @@ SystemExclusiveMessage.parseBuffer = function(buffer) {
       dataLength++;
     }
     data = dataLength ? buffer.slice(offset, offset + dataLength) : null;
-    return new SystemExclusiveMessage(manufacturerId, deviceId, data);
+
+    var message = new SystemExclusiveMessage(manufacturerId, deviceId, data);
+    if (dissector) {
+      var SysExParser = dissector.getSystemExclusiveParser(manufacturerId);
+      if (SysExParser) {
+        return SysExParser.parseMessage(message);
+      }
+    }
+    return message;
+
+
   }
 
+};
+
+SystemExclusiveMessage.prototype.getManufacturerName = function() {
+  var manufacturer = midiCommon.systemExclusive[this.manufacturerId];
+  return manufacturer && manufacturer.name || manufacturer;
 };
 
 SystemExclusiveMessage.prototype.toBuffer = function() {
