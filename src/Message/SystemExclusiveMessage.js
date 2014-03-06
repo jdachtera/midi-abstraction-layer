@@ -38,17 +38,7 @@ SystemExclusiveMessage.parseBuffer = function(buffer, dissector) {
       dataLength++;
     }
     data = dataLength ? buffer.slice(offset, offset + dataLength) : null;
-
-    var message = new SystemExclusiveMessage(manufacturerId, deviceId, data);
-    if (dissector) {
-      var SysExParser = dissector.getSystemExclusiveParser(manufacturerId);
-      if (SysExParser) {
-        return SysExParser.parseMessage(message);
-      }
-    }
-    return message;
-
-
+    return new SystemExclusiveMessage(manufacturerId, deviceId, data);
   }
 
 };

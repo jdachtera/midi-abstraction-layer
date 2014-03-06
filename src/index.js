@@ -13,7 +13,7 @@ var MidiMessage                 = require('./Message/MidiMessage'),
 
     midiCommon                  = require('midi-common'),
     util                        = require('util'),
-    Writable                    = require('stream').Writable
+    Transform                   = require('stream').Transform
     ;
 
 
@@ -36,7 +36,7 @@ var defaultSysExParsers = {
 };
 
 var Dissector = exports.Dissector = function Dissector(filter) {
-  Writable.apply(this);
+  Transform.apply(this);
   this.parsers = Object.create(defaultParsers);
   this.sysExParsers = Object.create(defaultSysExParsers);
   this.filter = {};
@@ -60,7 +60,7 @@ var Dissector = exports.Dissector = function Dissector(filter) {
   }
 };
 
-util.inherits(Dissector, Writable);
+util.inherits(Dissector, Transform);
 
 Dissector.addDefaultParser = function(command, parseFunc) {
     defaultParsers[command] = parseFunc;
@@ -73,6 +73,7 @@ Dissector.prototype.addParser = function(command, parseFunc) {
 Dissector.prototype.parse = function(buffer) {
   var command,
       type,
+      typeName,
       Parser,
       message;
 
@@ -88,31 +89,37 @@ Dissector.prototype.parse = function(buffer) {
     if (!this.filter[command]) {
       return;
     }
+
     type = midiCommon.commands[command];
     Parser = this.parsers[command];
 
-    if (type) {
-      if (Parser) {
-        message = Parser.parseBuffer(buffer, this);
-        if (message) {
-          this.emit(message.eventName || type.name, message);
-          this.emit('message', message.eventName || type.name, message);
-        }
-      } else {
-        this.emit(type.name, buffer);
-        this.emit('message', type.name, buffer);
-      }
+    if (!type) {
+      typeName = 'unknown';
+    } else {
+      typeName = type.name;
     }
+
+    if (Parser) {
+      message = Parser.parseBuffer(buffer, this);
+    }
+
+    if (!message) {
+      message = {buffer: buffer};
+    }
+    message.messageType = message.messageType || typeName;
+    return message;
 
   }
 };
 
-Dissector.prototype.getSystemExlusiveParser = function(manufacturerId) {
-  return this.sysExParsers[manufacturerId];
-};
+Dissector.prototype._transform = function(chunk, encoding, callback) {
+  var message = this.parse(chunk);
 
-Dissector.prototype._write = function(chunk, encoding, callback) {
-  this.parse(chunk);
+  if (!!message) {
+    this.push(message);
+    this.emit(message.messageType, message);
+    this.emit('message', message.messageType, message);
+  }
   callback && callback();
 };
 
