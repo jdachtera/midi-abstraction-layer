@@ -1,14 +1,19 @@
-var MidiMessage = require('./MidiMessage');
+var MidiMessage = require('./MidiMessage'),
+  util = require('util');
 
 function QuarterFrameMessage(data) {
   this.data = data;
 }
+
+util.inherits(QuarterFrameMessage, MidiMessage);
 
 QuarterFrameMessage.parseBuffer = function(buffer) {
   if (MidiMessage.validateBuffer(0xf1, buffer)) {
     return new QuarterFrameMessage(buffer[1]);
   }
 };
+
+QuarterFrameMessage.prototype.messageType = 'quarterFrame';
 
 QuarterFrameMessage.prototype.tobuffer = function() {
   return new Buffer([0xf1, this.data]);

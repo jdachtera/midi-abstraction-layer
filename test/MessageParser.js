@@ -1,9 +1,9 @@
 var mal = require('../src'),
     assert = require('assert');
 
-describe('Dissector', function() {
+describe('MessageParser', function() {
 
-  var d = new mal.Dissector();
+  var d = new mal.MessageParser();
 
   describe('#parse', function() {
 

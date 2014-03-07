@@ -1,8 +1,11 @@
-var MidiMessage = require('./MidiMessage');
+var MidiMessage = require('./MidiMessage'),
+  util = require('util');
 
 function SongPositionMessage(position) {
   this.position = position;
 }
+
+util.inherits(SongPositionMessage, MidiMessage);
 
 SongPositionMessage.parseBuffer = function(buffer) {
   var position;
@@ -11,6 +14,8 @@ SongPositionMessage.parseBuffer = function(buffer) {
     return new SongPositionMessage(position);
   }
 };
+
+SongPositionMessage.prototype.messageType = 'songPosition';
 
 SongPositionMessage.prototype.toBuffer = function() {
   var buffer = new Buffer(3);

@@ -1,9 +1,12 @@
-var MidiMessage = require('./MidiMessage');
+var MidiMessage = require('./MidiMessage'),
+  util = require('util');
 
 function PitchBendMessage(channel, pitch) {
   this.channel = channel;
   this.pitch = pitch;
 }
+
+util.inherits(PitchBendMessage, MidiMessage);
 
 PitchBendMessage.parseBuffer = function(buffer) {
   if (MidiMessage.validateBuffer(0xe0, buffer)) {
@@ -11,6 +14,8 @@ PitchBendMessage.parseBuffer = function(buffer) {
   }
   return null;
 };
+
+PitchBendMessage.prototype.messageType = 'pitchBend';
 
 PitchBendMessage.prototype.toBuffer = function() {
   var buffer = new buffer(3);

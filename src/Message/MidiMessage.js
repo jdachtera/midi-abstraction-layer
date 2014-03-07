@@ -1,14 +1,15 @@
-var util = require('util'),
-    midiCommon = require('midi-common');
+var midiCommon = require('midi-common');
 
-exports.validateBuffer = function(command, buffer) {
+function MidiMessage() {}
+
+MidiMessage.validateBuffer = function(command, buffer) {
   return buffer && (
     (!midiCommon.commands[command].hasOwnProperty('dataLength') ||
     (buffer.length - 1 >= midiCommon.commands[command].dataLength)) &&
     (buffer[0] & command) === command);
 };
 
-exports.decodeData = function(buffer, startOffset, endOffset) {
+MidiMessage.decodeData = function(buffer, startOffset, endOffset) {
   startOffset = startOffset || 0;
   endOffset = endOffset || buffer.length;
 
@@ -26,12 +27,24 @@ exports.decodeData = function(buffer, startOffset, endOffset) {
   return decodedBuffer;
 };
 
-exports.readUInt14BE = function(buffer, offset) {
+MidiMessage.readUInt14BE = function(buffer, offset) {
   return ((buffer[offset] & 0x7f) << 7) | (buffer[offset + 1] & 0x7f);
 };
 
-exports.writeUInt14BE = function(buffer, offset, value) {
+MidiMessage.writeUInt14BE = function(buffer, offset, value) {
   buffer[offset] = (0x7F & (value >> 7));
   buffer[offset + 1] = (0x7F & value);
 };
+
+MidiMessage.prototype.toString = function() {
+  var string = '<Type: ' + this.messageType;
+  for (var key in this) {
+    if (this.hasOwnProperty(key)) {
+      string += ' ' + key + ': ' + this[key];
+    }
+  }
+  return string + '>';
+};
+
+module.exports = MidiMessage;
 

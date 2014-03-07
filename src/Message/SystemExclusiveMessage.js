@@ -1,5 +1,6 @@
 var MidiMessage = require('./MidiMessage'),
-    midiCommon = require('midi-common');
+    midiCommon = require('midi-common'),
+  util = require('util');
 
 function SystemExclusiveMessage(manufacturerId, deviceId, data) {
   if (typeof(manufacturerId) === 'string') {
@@ -14,6 +15,8 @@ function SystemExclusiveMessage(manufacturerId, deviceId, data) {
   this.deviceId = deviceId;
   this.data = data;
 }
+
+util.inherits(SystemExclusiveMessage, MidiMessage);
 
 SystemExclusiveMessage.parseBuffer = function(buffer, dissector) {
   if (MidiMessage.validateBuffer(0xf0, buffer)) {
@@ -42,6 +45,8 @@ SystemExclusiveMessage.parseBuffer = function(buffer, dissector) {
   }
 
 };
+
+SystemExclusiveMessage.prototype.messageType = 'systemExclusive';
 
 SystemExclusiveMessage.prototype.getManufacturerName = function() {
   var manufacturer = midiCommon.systemExclusive[this.manufacturerId];

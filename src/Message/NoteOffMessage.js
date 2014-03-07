@@ -1,9 +1,12 @@
-var MidiMessage = require('./MidiMessage');
+var MidiMessage = require('./MidiMessage'),
+    util = require('util');
 
 function NoteOffMessage(channel, note, velocity) {
   this.channel = channel;
   this.note = note;
 }
+
+util.inherits(NoteOffMessage, MidiMessage);
 
 NoteOffMessage.parseBuffer = function(buffer) {
   if (MidiMessage.validateBuffer(0x80, buffer)) {
@@ -11,8 +14,10 @@ NoteOffMessage.parseBuffer = function(buffer) {
   }
 };
 
+NoteOffMessage.prototype.messageType = 'noteOff';
+
 NoteOffMessage.prototype.toBuffer = function() {
-  return new Buffer([0x80 & this.channel, this.note]);
+  return new Buffer([0x80 | (this.channel & 0x0f), this.note]);
 };
 
 

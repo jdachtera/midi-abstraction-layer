@@ -1,9 +1,12 @@
-var MidiMessage = require('./MidiMessage');
+var MidiMessage = require('./MidiMessage'),
+  util = require('util');
 
-function ProgramChangeMessage(channel, program, velocity) {
+function ProgramChangeMessage(channel, program) {
   this.channel = channel;
   this.program = program;
 }
+
+util.inherits(ProgramChangeMessage, MidiMessage);
 
 ProgramChangeMessage.parseBuffer = function(buffer) {
   if (MidiMessage.validateBuffer(0xc0, buffer)) {
@@ -12,8 +15,10 @@ ProgramChangeMessage.parseBuffer = function(buffer) {
   return null;
 };
 
+ProgramChangeMessage.prototype.messageType = 'programChange';
+
 ProgramChangeMessage.prototype.toBuffer = function() {
-  return new Buffer([0xc0 & this.channel, this.program]);
+  return new Buffer([0xc0 | (this.channel & 0x0f), this.program]);
 };
 
 module.exports = ProgramChangeMessage;
