@@ -22,11 +22,14 @@ session.connect({
 
 var port = new mal.VirtualPort();
 
+
+// Add some inputs and outputs to our virtual port
 port.addInput(input);
 port.addInput(session);
 port.addOutput(output);
 port.addOutput(session);
 
+// Look what's coming in
 port.input.on('message', function(message) {
   console.log('Received a message', message);
 });
@@ -37,15 +40,33 @@ port.output.on('message', function(message) {
   console.log('Sending message: ', message.toString());
 });
 
+// Wait a few seconds until the network session is synchronized
+setTimeout(function() {
 
-var notes = [60, 62, 64, 65, 67, 69, 71, 72],
+  // Send some random system messages
+  // See src/MessageGenerator.js
+  port.output.reset();
+  port.output.start();
+  port.output.stop();
+  port.output.continue();
+  port.output.clock();
+
+  // Play a nice melody
+  var notes = [60, 62, 64, 65, 67, 69, 71, 72],
     i = 0;
 
-setInterval(function() {
-  port.output.noteOff(0, notes[(notes.length + i - 1) % notes.length]);
-  port.output.noteOn(0, notes[i], 127);
-  i = (i + 1) % notes.length;
-}, 400);
+  setInterval(function() {
+    port.output.noteOff(0, notes[(notes.length + i - 1) % notes.length]);
+    port.output.noteOn(0, notes[i], 127);
+    i = (i + 1) % notes.length;
+  }, 400);
+
+}, 10000);
+
+
+
+
+
 
 
 
