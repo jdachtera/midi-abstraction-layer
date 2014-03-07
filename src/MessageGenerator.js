@@ -94,7 +94,7 @@ MessageGenerator.prototype.continue = function() {
 };
 
 MessageGenerator.prototype.stop = function() {
-  return this._pushMessage(new SystemMessage(0xc));
+  return this._pushMessage(new SystemMessage(0xfc));
 };
 
 MessageGenerator.prototype.activeSensing = function() {

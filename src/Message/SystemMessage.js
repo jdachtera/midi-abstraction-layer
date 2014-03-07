@@ -16,5 +16,7 @@ SystemMessage.parseBuffer = function(buffer) {
 };
 
 SystemMessage.prototype.toBuffer = function() {
-  return new Buffer(this.command);
+  return new Buffer([this.command]);
 };
+
+module.exports = SystemMessage;
